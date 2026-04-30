@@ -131,7 +131,7 @@ Studies \cite{Elangovan2025, travalaManyTravelers, karlovic2025context} demonstr
 
 \subsection*{Current model performance}
 
-TODO: mogoče če sam na krato napišeš da je model že sam ful dobr glede na tiste poskuse k sm jih nardila, zato sva se odločle za agente
+The \textbf{Llama-3.1-8B-Instruct} model demonstrated strong reasoning and instruction-following capabilities directly out-of-the-box, eliminating the need for expensive fine-tuning. However, its utility is limited by a knowledge cutoff in late 2023, making it unable to process real-time data or events from 2023 onwards. To solve this, we integrated the model into an agentic framework. By providing the model with API access, we effectively extended its capabilities beyond its training data, allowing it to retrieve live information and perform tasks involving current, dynamic data.
 
 
 \subsection*{Agents}
@@ -150,11 +150,12 @@ While the integration proved effective, achieving reliable behavior required car
 To address these problems, we introduced explicit rules in the \textbf{system prompt}. The agent is instructed to call the transport tool exactly once, use the provided datetime (or the current time if none is specified), and base its answer on the first leg of the journey. Additionally, the final response must include the departure time from the origin, the arrival time at the destination, and the full route with transfers, instead of returning only a single time.
 
 
-\subsection*{Random text}
+\subsubsection*{Weather Forecast Agent}
+The system uses the \textbf{OpenWeatherMap} 5-Day/3-Hour Forecast API to retrieve granular data, including min/max temperatures, weather conditions, and precipitation probability. While the retrieval and parsing of the raw JSON data were successful and factually accurate, the model produced a semi-correct output due to a failure in constraint following. It reported the full five days of available tool data despite the user's explicit request for only a 3 day forecast, prioritizing a complete summary of the observation block over the prompt's temporal limitations.
 
-This text is inserted only to make this template look more like a proper report. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam blandit dictum facilisis. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Interdum et malesuada fames ac ante ipsum primis in faucibus. Etiam convallis tellus velit, quis ornare ipsum aliquam id. Maecenas tempus mauris sit amet libero elementum eleifend. Nulla nunc orci, consectetur non consequat ac, consequat non nisl. Aenean vitae dui nec ex fringilla malesuada. Proin elit libero, faucibus eget neque quis, condimentum laoreet urna. Etiam at nunc quis felis pulvinar dignissim. Phasellus turpis turpis, vestibulum eget imperdiet in, molestie eget neque. Curabitur quis ante sed nunc varius dictum non quis nisl. Donec nec lobortis velit. Ut cursus, libero efficitur dictum imperdiet, odio mi fermentum dui, id vulputate metus velit sit amet risus. Nulla vel volutpat elit. Mauris ex erat, pulvinar ac accumsan sit amet, ultrices sit amet turpis.
+\subsection*{Further Improvements}
 
-Phasellus in ligula nunc. Vivamus sem lorem, malesuada sed pretium quis, varius convallis lectus. Quisque in risus nec lectus lobortis gravida non a sem. Quisque et vestibulum sem, vel mollis dolor. Nullam ante ex, scelerisque ac efficitur vel, rhoncus quis lectus. Pellentesque scelerisque efficitur purus in faucibus. Maecenas vestibulum vulputate nisl sed vestibulum. Nullam varius turpis in hendrerit posuere.
+Future development will focus on integrating APIs for \textbf{flights, accommodations, and local amenities} to provide real-time pricing, availability, and localized reviews for restaurants and attractions. Adding location-based services will allow the model to identify specific points of interest. Furthermore, a dedicated itinerary tool will synthesize weather, transit times, and opening hours into cohesive, hour-by-hour schedules, transitioning the agent from a basic information retriever into a proactive end-to-end trip planner.
 
 
 \subsection*{Figures}
