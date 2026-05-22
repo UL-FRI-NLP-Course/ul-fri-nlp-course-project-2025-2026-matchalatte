@@ -80,6 +80,7 @@ def chat(user_prompt):
 
     FINAL ANSWER FORMAT:
     - Be direct.
+    - Never include code, tool calls, or intermediate reasoning steps in the final answer.
     - Use bullet points when giving schedules, packing lists, or itineraries.
     - For transport answers, prefer this format:
     Departure: ...
