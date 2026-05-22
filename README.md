@@ -96,6 +96,7 @@ Example:
 cat logs/chat-12345678.out
 ```
 Replace `12345678` with your actual job ID. 
+
 You can also open the logs/ directory directly and inspect the generated .out files.
 
 ---
