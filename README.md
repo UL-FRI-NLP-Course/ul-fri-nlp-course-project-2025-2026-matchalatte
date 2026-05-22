@@ -17,23 +17,6 @@ It balances 🎨 creative trip planning with 🌍 real-world accuracy.
 
 ---
 
-## 🧩 System Overview
-
-This chatbot is built on three main layers:
-
-- 🧠 **Base LLM** → generates itineraries, tips, and recommendations  
-- 🛠️ **smolagents** → handles tool calling and orchestration  
-- 🔌 **External tools** → provide real-time data (weather + trains)  
-
----
-
-## ⚙️ Tools
-
-- 🌦️ `weather_forecast` → gets current and forecast weather  
-- 🚆 `search_train_connections` → finds train routes and schedules  
-
----
-
 ## 🚀 How to Run
 
 ### 1. Clone the repository
@@ -100,7 +83,22 @@ Replace `12345678` with your actual job ID.
 You can also open the logs/ directory directly and inspect the generated .out files.
 
 ---
+## 🧩 System Overview
 
+This chatbot is built on three main layers:
+
+- 🧠 **Base LLM** → generates itineraries, tips, and recommendations  
+- 🛠️ **smolagents** → handles tool calling and orchestration  
+- 🔌 **External tools** → provide real-time data (weather + trains)  
+
+---
+
+## ⚙️ Tools
+
+- 🌦️ `weather_forecast` → gets current and forecast weather  
+- 🚆 `search_train_connections` → finds train routes and schedules  
+
+---
 ## 💬 Example Usage
 
 `User: Plan a 4-day trip to Rome with trains from Milan and weather info.`
