@@ -1,8 +1,5 @@
 huggingface_hub==1.12.2
 smolagents
 transformers==5.7.0
-torch==2.11.0
-torchvision==0.26.0
 accelerate
 ddgs
-torchaudio

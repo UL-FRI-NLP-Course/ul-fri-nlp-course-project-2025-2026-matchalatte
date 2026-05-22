@@ -29,8 +29,9 @@ cd ul-fri-nlp-course-project-2025-2026-matchalatte
 module load Python/3.10.8-GCCcore-12.2.0
 python -m venv my_env
 source my_env/bin/activate
+pip install torch==2.7.1+cu118 torchvision==0.22.1+cu118 torchaudio==2.7.1+cu118 \
+--index-url https://download.pytorch.org/whl/cu118
 pip install -r requirements.txt
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
 ### 3. Log in to Hugging Face
 The model used in this project requires a Hugging Face access token.

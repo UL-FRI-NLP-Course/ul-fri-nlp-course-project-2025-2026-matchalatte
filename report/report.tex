@@ -20,6 +20,21 @@
 %----------------------------------------------------------------------------------------
 \documentclass[fleqn,moreauthors,10pt]{ds_report}
 \usepackage[english]{babel}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{cleveref}
+\usepackage{fvextra}
+\usepackage{listings}
+\usepackage{textcomp}
+
+\lstset{
+    basicstyle=\small\ttfamily,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false
+}
 
 \graphicspath{{fig/}}
 
@@ -44,10 +59,10 @@
 \Authors{Nina Kokalj and Tia Šarkezi}
 
 % Advisors
-\affiliation{\textit{Advisors: Slavko Žitnik}}
+\affiliation{\textit{Advisors: Aleš Žagar}}
 
 % Keywords
-\Keywords{Keyword1, Keyword2, Keyword3 ...}
+\Keywords{Travel chatbot, Large language model, Tool-using agents, API integration, Prompt Engineerings}
 \newcommand{\keywordname}{Keywords}
 
 
@@ -56,7 +71,7 @@
 %----------------------------------------------------------------------------------------
 
 \Abstract{
-The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here.
+This project presents a travel chatbot that combines a large language model with tool-using agents to support itinerary generation and real-time travel assistance. The system integrates external tools for weather forecasting and train connection search, enabling access to up-to-date information beyond the capabilities of a standalone language model. The initial base model demonstrated strong performance in generating itineraries and travel recommendations but lacked factual reliability due to the absence of live data. To address this, a smolagents-based architecture was introduced to enable structured tool usage through API calls. Further improvements were achieved through prompt engineering, few-shot examples, and simplified tool schemas, which improved output consistency and reduced parsing errors. Evaluation shows that while tool augmentation improves correctness, it can negatively affect creative output without careful prompting and routing design. The results highlight a trade-off between creative generation and grounded, real-time information retrieval, emphasizing the importance of prompt design, schema structure, and agent coordination in building reliable LLM-based travel systems.
 }
 
 %----------------------------------------------------------------------------------------
@@ -78,48 +93,11 @@ The abstract goes here. The abstract goes here. The abstract goes here. The abst
 
 \section*{Introduction}
 
-Modern AI tourism has transitioned from static engines to dynamic, conversational agents. This project focuses on the development of a travel planning chatbot designed to take the stress out of vacation planning. By analyzing user preferences such as geographic region, seasonality, and climate, the bot provides tailored destination recommendations. The system generates curated itineraries and highlights most popular attractions, ensuring every suggestion aligns with the user's specific budget and travel style. To ensure the highest relevance, the chatbot utilizes a smart filtering and scoring system to rank destinations based on their ratings, distance and popularity with other users.
+This project focuses on developing a travel chatbot that provides itinerary generation, travel recommendations, live weather information, and train schedule information in a single system. The project combines large language models with external tools to extend chatbot capabilities beyond text generation. The main objective is to create a system that generates useful travel plans while retrieving accurate real-time information. The main challenge is balancing flexible itinerary generation with reliable external data retrieval.
 
-\subsection{Datasets}
+\
 
-To train the travel chatbot, we will use a combination of domain-specific knowledge datasets and dialogue-oriented datasets.
-
-\paragraph{Travel Knowledge Datasets}
-These datasets provide information about destinations, attractions, and general travel content:
-\begin{itemize}
-    \item \textbf{Wikivoyage} – a travel guide with detailed information about countries, cities, and points of interest, including things to do and travel tips. The data is available as an XML dump and needs to be parsed before use \cite{wikivoyage_dump}.
-    
-    \item \textbf{GeoNames} – a geographical database with information about locations such as cities, countries, and landmarks \cite{geonames}.
-\end{itemize}
-
-\paragraph{Dialogue Datasets}
-These datasets help the chatbot learn how to communicate naturally in travel-related situations:
-\begin{itemize}
-    \item \textbf{MultiWOZ 2.2} – a widely used conversational dataset in JSON format, containing dialogues about booking hotels, restaurants, and transportation \cite{multiwoz_github}.
-    
-    \item \textbf{DSTC8} – a multi-domain dialogue dataset that includes travel-related conversations, such as hotel and restaurant scenarios \cite{dstc8_sgd_github}.
-\end{itemize}
-
-\paragraph{Review Datasets}
-Review datasets include real user opinions and experiences, helping the chatbot give more realistic recommendations and understand sentiment:
-
-\begin{itemize}
-    \item \textbf{515K Hotel Reviews in Europe} – a large-scale dataset containing hotel reviews across Europe \cite{hotel_reviews_europe}.
-    
-    \item \textbf{TripAdvisor Hotel Reviews} – a dataset of 20,000 hotel reviews from TripAdvisor \cite{tripadvisor_reviews}.
-    
-    \item \textbf{Booking.com Reviews (30k)} – a dataset containing approximately 30,000 hotel reviews from Booking.com \cite{booking_reviews}.
-\end{itemize}
-
-\paragraph{Additional Datasets (Hugging Face)}
-To further improve performance, a few travel-related datasets from Hugging Face will also be used:
-\begin{itemize}
-    \item \texttt{fathyshalab/clinic-travel} – contains travel-related conversations \cite{clinic_travel}.
-    \item \texttt{osunlp/TravelPlanner} – designed for itinerary planning and travel assistance \cite{travelplanner}.
-    \item \texttt{soniawmeyer/travel-conversations} – contains curated travel dialogues for fine-tuning \cite{travel_conversations}.
-\end{itemize}
-
-\subsection{Related work}
+\subsection*{Related work}
 
 Studies \cite{Elangovan2025, travalaManyTravelers, karlovic2025context} demonstrate that while LLMs excel at dialogue, they struggle with logistical "hard constraints" like budgets and schedules. To solve this, researchers are now using hybrid architectures that pair LLMs with deterministic filtering and scoring systems. These hybrid models have achieved up to 91\% recommendation accuracy, significantly reducing decision fatigue for the 40\% of global travelers who now use AI as their primary trip-discovery tool. By integrating user-specific weights for travel style and budget, these systems deliver high-fidelity itineraries that mirror the expertise of a human travel consultant.
 
@@ -127,128 +105,401 @@ Studies \cite{Elangovan2025, travalaManyTravelers, karlovic2025context} demonstr
 
 \section*{Methods}
 
+The system is built as a pipeline that combines a base \textbf{large language model} with a \textbf{tool-using agent} layer. User queries are first processed by the LLM, which either generates a direct response or decides to invoke external tools through an agent framework based on \texttt{smolagents}. In the base configuration, the model is responsible for itinerary generation, travel recommendations, and conversational responses without access to external data.
+
+In the extended system, an agent layer enables interaction with external tools, including a weather forecasting tool and a train connection search tool. The agent follows a reasoning loop where it decides when to call a tool, executes the call, and integrates the returned observation into the final response.
+The system is guided by a structured \textbf{system prompt} that defines rules for itinerary generation, tool usage, and final output formatting. Few-shot examples are included to enforce correct execution patterns and reduce formatting errors. Additionally, tool schemas were simplified from nested JSON structures to flatter formats to improve parsing reliability and reduce model error rates.
 
 
-\subsection*{Current model performance}
+%\begin{flushleft}
+%\begin{tcolorbox}[colback=blue!10,width=0.7\linewidth]
+%User: Recommend a movie
+%\end{tcolorbox}
+%\end{flushleft}
 
-The \textbf{Llama-3.1-8B-Instruct} model demonstrated strong reasoning and instruction-following capabilities directly out-of-the-box, eliminating the need for expensive fine-tuning. However, its utility is limited by a knowledge cutoff in late 2023, making it unable to process real-time data or events from 2023 onwards. To solve this, we integrated the model into an agentic framework. By providing the model with API access, we effectively extended its capabilities beyond its training data, allowing it to retrieve live information and perform tasks involving current, dynamic data.
+%\begin{flushright}
+%\begin{tcolorbox}[colback=green!10,width=0.7\linewidth]
+%Chatbot: I recommend Interstellar if you enjoy science fiction.
+%\end{tcolorbox}
+%\end{flushright}
 
 
-\subsection*{Agents}
+\section*{Experiments}
+\subsection*{Base Model Performance}
 
-To extend the capabilities of the chatbot beyond the knowledge stored in the language model, we implemented a set of \textbf{tool-using agents}. These agents are designed to query external data sources when necessary, enabling the system to provide more accurate and up-to-date information. All agents are based on a language model combined with the \texttt{CodeAgent} framework.
+The initial version of the travel chatbot was developed using only a base large language model, \textbf{Llama-3.1-8B-Instruct} \cite{llama3},  without external tool integration. The model demonstrated strong reasoning and instruction-following capabilities directly out-of-the-box. It performed well in generating detailed travel itineraries, suggesting destinations based on user preferences, providing general travel tips, and maintaining natural conversational interactions. It was able to create structured travel plans and produce responses that felt coherent and user-friendly. Example prompts and outputs were used to evaluate these capabilities. However, the base model had one important limitation - \textbf{knowledge cutoff in 2023}. Since it had no access to live external data, it could not provide real-time information. This resulted in hallucinated train schedules, inaccurate weather information, and potentially outdated travel details.
+
+
+\subsection*{Integrating Tool-Using Agents}
+
+The system was extended by introducing tool-using agents built with \texttt{smolagents} \cite{smolagents}. External tools were added to move beyond pure language generation. Two main tools were integrated:
+\begin{itemize}
+    \item \texttt{weather\_forecast} -- provides real-time and short-term weather data for a given location.
+    \item \texttt{search\_train\_connections} -- retrieves up-to-date train routes, schedules, and connection options between cities.
+\end{itemize} 
+
+
+These tools rely on external API calls to fetch live data, replacing static or guessed information with verified outputs. This significantly improves the reliability and practical usefulness of the assistant, especially for time-sensitive travel planning. The agent architecture is based on an LLM that decides when to call tools, executes the tool calls through \texttt{smolagents}, which handle the underlying API requests, and then combines the returned results into a final response.
+
 
 
 \subsubsection*{Train Agent}
 
 The goal of this component was to extend the chatbot with the ability to access \textbf{up-to-date train schedules}, which are not reliably stored in the language model itself.
 
-For retrieving train connections, we implemented a custom tool using the ÖBB (Austrian Federal Railways) HAFAS API. This tool resolves station names and queries journey data, returning structured information such as departure time, arrival time, and the full route with transfers.
+For retrieving train connections, we implemented a custom tool using the ÖBB (Austrian Federal Railways) HAFAS API.\footnote{ÖBB API Portal: \url{https://apiportal.oebb.at}. No public documentation available; endpoints were accessed via the HAFAS interface.} This tool resolves station names and queries journey data, returning structured information such as departure time, arrival time, and the full route with transfers.
 
-While the integration proved effective, achieving reliable behavior required careful prompt engineering. In early experiments, the agent exhibited several issues: it repeatedly called the tool with different departure times, searched for connections in the past (e.g., starting at midnight for queries referring to ``today''), and sometimes returned incorrect results by selecting times from intermediate transfers instead of the actual departure from the origin.
+%While the integration proved effective, achieving reliable behavior required careful prompt engineering. In early experiments, the agent exhibited several issues: it repeatedly called the tool with different departure times, searched for connections in the past (e.g., starting at midnight for queries referring to ``today''), and sometimes returned incorrect results by selecting times from intermediate transfers instead of the actual departure from the origin.
 
-To address these problems, we introduced explicit rules in the \textbf{system prompt}. The agent is instructed to call the transport tool exactly once, use the provided datetime (or the current time if none is specified), and base its answer on the first leg of the journey. Additionally, the final response must include the departure time from the origin, the arrival time at the destination, and the full route with transfers, instead of returning only a single time.
-
+%To address these problems, we introduced explicit rules in the \textbf{system prompt}. The agent is instructed to call the transport tool exactly once, use the provided datetime (or the current time if none is specified), and base its answer on the first leg of the journey. Additionally, the final response must include the departure time from the origin, the arrival time at the destination, and the full route with transfers, instead of returning only a single time.
 
 \subsubsection*{Weather Forecast Agent}
-The system uses the \textbf{OpenWeatherMap} 5-Day/3-Hour Forecast API to retrieve granular data, including min/max temperatures, weather conditions, and precipitation probability. While the retrieval and parsing of the raw JSON data were successful and factually accurate, the model produced a semi-correct output due to a failure in constraint following. It reported the full five days of available tool data despite the user's explicit request for only a 3 day forecast, prioritizing a complete summary of the observation block over the prompt's temporal limitations.
+The system uses the \textbf{OpenWeatherMap} 5-Day/3-Hour Forecast API \cite{openweathermap-forecast5} to retrieve granular data, including min/max temperatures, weather conditions, and precipitation probability. %While the retrieval and parsing of the raw JSON data were successful and factually accurate, the model produced a semi-correct output due to a failure in constraint following. It reported the full five days of available tool data despite the user's explicit request for only a 3 day forecast, prioritizing a complete summary of the observation block over the prompt's temporal limitations.
 
-\subsection*{Further Improvements}
+\subsection*{Problems After Adding Agents}
+After enabling agents globally, several issues appeared.
+\subsubsection*{Decrease in itinerary quality}
+The model started producing shorter and more generic itineraries. Recommendations became less detailed and less immersive. Instead of focusing on travel planning quality, the model shifted toward deciding when and how to use tools. This reduced creative planning performance.
+\subsubsection*{Tool misuse}
+The agent often triggered unnecessary web searches and repeated tool calls for the same query. In some cases, it misinterpreted when tools were actually needed. It also showed errors in parsing tool outputs, which led to inconsistent downstream reasoning.
+\subsubsection*{Final answer formatting issues}
+The system occasionally produced multiple \texttt{final\_answer\\(...)} calls instead of a single consolidated response. In some cases, it used \texttt{print(...)} instead of the required output function. This resulted in incomplete or partially delivered answers to the user.
+\subsubsection*{Structured output problems}
+Complex JSON schemas were a major source of errors. The agent struggled with nested structures, sometimes hallucinating field names or misaligning expected formats. As schema complexity increased, overall reliability decreased.
 
-Future development will focus on integrating APIs for \textbf{flights, accommodations, and local amenities} to provide real-time pricing, availability, and localized reviews for restaurants and attractions. Adding location-based services will allow the model to identify specific points of interest. Furthermore, a dedicated itinerary tool will synthesize weather, transit times, and opening hours into cohesive, hour-by-hour schedules, transitioning the agent from a basic information retriever into a proactive end-to-end trip planner.
+\subsection*{Prompt Engineering Solutions}
+\subsubsection*{System Prompt Optimization}
+The system prompt was refined with explicit rules for itinerary generation, weather handling, transport queries, tool usage, and final answer formatting (see Appendix~\ref{app:system-prompt}). It clearly defined when tools should be used and when the model should rely on reasoning. It also enforced a single, complete response format. These constraints improved consistency by reducing ambiguity in decision-making and aligning outputs with expected behavior.
 
+\subsubsection*{Behavioral Few-Shot Prompting}
+Few-shot examples were added to demonstrate correct agent behavior (see Appendix~\ref{app:few-shot-examples}). These included examples of proper \texttt{final\_answer\\(...)} usage, strict avoidance of multiple \texttt{final\_answer\\(...)} calls, and the requirement to construct the full response before outputting it. These examples provided concrete execution patterns for the model to follow. As a result, the agent became more stable in how it structured and finalized responses.
 
-\subsection*{Figures}
+\subsection*{Tool and Schema Optimization}
+Simplifying tool schemas improved usability for the LLM. Complex, nested JSON structures were difficult for the agent to reliably generate and interpret, especially under multi-step tool use.
+A clear difference was observed between nested JSON outputs and simplified flat outputs. Nested structures increased ambiguity and led to frequent field mismatches, while flat structures were easier to generate and parse consistently.
+Improvements included shorter field names, shallower hierarchies, and more predictable output formats. These changes reduced cognitive load for the model during tool use. Overall, schema simplification significantly reduced parsing errors and improved tool reliability.
 
-You can insert figures that span over the whole page, or over just a single column. The first one, \figurename~\ref{fig:column}, is an example of a figure that spans only across one of the two columns in the report.
-
-\begin{figure}[ht]\centering
-	\includegraphics[width=\linewidth]{single_column.pdf}
-	\caption{\textbf{A random visualization.} This is an example of a figure that spans only across one of the two columns.}
-	\label{fig:column}
-\end{figure}
-
-On the other hand, \figurename~\ref{fig:whole} is an example of a figure that spans across the whole page (across both columns) of the report.
-
-% \begin{figure*} makes the figure take up the entire width of the page
-\begin{figure*}[ht]\centering 
-	\includegraphics[width=\linewidth]{whole_page.pdf}
-	\caption{\textbf{Visualization of a Bayesian hierarchical model.} This is an example of a figure that spans the whole width of the report.}
-	\label{fig:whole}
-\end{figure*}
-
-
-\subsection*{Tables}
-
-Use the table environment to insert tables.
-
-\begin{table}[hbt]
-	\caption{Table of grades.}
-	\centering
-	\begin{tabular}{l l | r}
-		\toprule
-		\multicolumn{2}{c}{Name} \\
-		\cmidrule(r){1-2}
-		First name & Last Name & Grade \\
-		\midrule
-		John & Doe & $7.5$ \\
-		Jane & Doe & $10$ \\
-		Mike & Smith & $8$ \\
-		\bottomrule
-	\end{tabular}
-	\label{tab:label}
-\end{table}
-
-
-\subsection*{Code examples}
-
-You can also insert short code examples. You can specify them manually, or insert a whole file with code. Please avoid inserting long code snippets, advisors will have access to your repositories and can take a look at your code there. If necessary, you can use this technique to insert code (or pseudo code) of short algorithms that are crucial for the understanding of the manuscript.
-
-\lstset{language=Python}
-\lstset{caption={Insert code directly from a file.}}
-\lstset{label={lst:code_file}}
-\lstinputlisting[language=Python]{code/example.py}
-
-\lstset{language=R}
-\lstset{caption={Write the code you want to insert.}}
-\lstset{label={lst:code_direct}}
-\begin{lstlisting}
-import(dplyr)
-import(ggplot)
-
-ggplot(diamonds,
-	   aes(x=carat, y=price, color=cut)) +
-  geom_point() +
-  geom_smooth()
-\end{lstlisting}
-
-%------------------------------------------------
 
 \section*{Results}
+\subsection*{Base Model Outputs}
+\begin{tcolorbox}[
+    colback=gray!5,
+    colframe=black!80,
+    title=Base Model Output - Itinerary,
+    arc=2mm,
+    before skip=0pt,
+    label={box:base-model-itinerary}
+]
 
-Use the results section to present the final results of your work. Present the results in a objective and scientific fashion. Use visualisations to convey your results in a clear and efficient manner. When comparing results between various techniques use appropriate statistical methodology.
+\textbf{User:} Can you suggest a romantic weekend in Europe for a couple?
 
-\subsection*{More random text}
+\vspace{0.3cm}
 
-This text is inserted only to make this template look more like a proper report. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam blandit dictum facilisis. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Interdum et malesuada fames ac ante ipsum primis in faucibus. Etiam convallis tellus velit, quis ornare ipsum aliquam id. Maecenas tempus mauris sit amet libero elementum eleifend. Nulla nunc orci, consectetur non consequat ac, consequat non nisl. Aenean vitae dui nec ex fringilla malesuada. Proin elit libero, faucibus eget neque quis, condimentum laoreet urna. Etiam at nunc quis felis pulvinar dignissim. Phasellus turpis turpis, vestibulum eget imperdiet in, molestie eget neque. Curabitur quis ante sed nunc varius dictum non quis nisl. Donec nec lobortis velit. Ut cursus, libero efficitur dictum imperdiet, odio mi fermentum dui, id vulputate metus velit sit amet risus. Nulla vel volutpat elit. Mauris ex erat, pulvinar ac accumsan sit amet, ultrices sit amet turpis.
+\textbf{Chatbot:} \\
+I'd be delighted to help plan a romantic weekend getaway in Europe for the two of you.
 
-Phasellus in ligula nunc. Vivamus sem lorem, malesuada sed pretium quis, varius convallis lectus. Quisque in risus nec lectus lobortis gravida non a sem. Quisque et vestibulum sem, vel mollis dolor. Nullam ante ex, scelerisque ac efficitur vel, rhoncus quis lectus. Pellentesque scelerisque efficitur purus in faucibus. Maecenas vestibulum vulputate nisl sed vestibulum. Nullam varius turpis in hendrerit posuere.
+Destination: Paris, France (the City of Love)
 
-Nulla rhoncus tortor eget ipsum commodo lacinia sit amet eu urna. Cras maximus leo mauris, ac congue eros sollicitudin ac. Integer vel erat varius, scelerisque orci eu, tristique purus. Proin id leo quis ante pharetra suscipit et non magna. Morbi in volutpat erat. Vivamus sit amet libero eu lacus pulvinar pharetra sed at felis. Vivamus non nibh a orci viverra rhoncus sit amet ullamcorper sem. Ut nec tempor dui. Aliquam convallis vitae nisi ac volutpat. Nam accumsan, erat eget faucibus commodo, ligula dui cursus nisi, at laoreet odio augue id eros. Curabitur quis tellus eget nunc ornare auctor.
+Duration: 2 nights/3 days
+
+Itinerary:
+
+Day 1:
+\begin{itemize}[noitemsep, topsep=0pt]
+    \item Morning: Arrive at Charles de Gaulle Airport and take a taxi or train to your hotel in the heart of Paris.
+    \item Visit the iconic Eiffel Tower (lift tickets recommended) and enjoy breathtaking views of the city from its top.
+    \item Stroll along the Seine River and admire the beautiful bridges, historic buildings, and charming street performers.
+    \item Lunch at a cozy bistro, such as Le Comptoir du Relais or Chez L'Ami Jean.
+    \item Afternoon: Explore the famous Louvre Museum, home to the Mona Lisa and many other artistic treasures.
+    \item Dinner at a Michelin-starred restaurant, like Septime or Le Grand Vefour.
+\end{itemize}
+
+Day 2:
+\begin{itemize}[noitemsep, topsep=0pt]
+    \item Breakfast at a charming café, such as Café de Flore or Les Deux Magots.
+    \item Visit the stunning Notre-Dame Cathedral and explore the adjacent Île de la Cité.
+    \item Take a scenic boat tour on the Seine River, offering a unique perspective on the city's landmarks.
+    \item Lunch at a picturesque riverside restaurant, such as Le Jules Verne or La Grande Épicerie.
+    \item Afternoon: Wander through the beautiful Luxembourg Gardens and visit the nearby Musée Rodin.
+    \item Dinner
+\end{itemize}
 
 
-%------------------------------------------------
+\end{tcolorbox}
+
+\begin{tcolorbox}[
+    colback=gray!5,
+    colframe=black!80,
+    title=Base Model Output - Train Schedule,
+    arc=2mm
+]
+
+\textbf{User:} What is the fastest connection from Munich to Salzburg tomorrow morning?
+
+\vspace{0.3cm}
+
+\textbf{Chatbot:} \\
+To find the best train route from Ljubljana to Munich for tomorrow, I will provide the following information:
+
+1. Ljubljana (Slovenia) to Jesenice (Slovenia):
+\begin{itemize}
+    \item From Ljubljana's main station, take a regional train operated by Slovenske Železnice (SZ).
+    \item The journey takes approximately 45 minutes.
+\end{itemize}
+
+2. Jesenice (Slovenia) to Innsbruck (Austria):
+\begin{itemize}
+    \item At Jesenice, transfer to a regional train operated by ÖBB (Austrian Federal Railways).
+    \item The journey takes approximately 1 hour and 15 minutes.
+\end{itemize}
+
+3. Innsbruck (Austria) to Kufstein (Austria):
+\begin{itemize}
+    \item Take an intercity train operated by ÖBB.
+    \item The journey takes approximately 30 minutes.
+\end{itemize}
+
+4. Kufstein (Austria) to Rosenheim (Germany):
+\begin{itemize}
+    \item Take an intercity train operated by DB (German Federal Railways).
+    \item The journey takes approximately 1 hour.
+\end{itemize}
+
+5. Rosenheim (Germany) to Munich (Germany):
+\begin{itemize}
+    \item Take an intercity train operated by DB.
+    \item The journey takes approximately 35 minutes.
+\end{itemize}
+
+
+Booking Information:
+
+\begin{itemize}
+    \item You can book your tickets on the websites of Slovenske Železnice.
+\end{itemize}
+
+\end{tcolorbox}
+
+\begin{tcolorbox}[
+    colback=gray!5,
+    colframe=black!80,
+    title=Prompt-Engineered Model Output - Weather,
+    arc=2mm
+]
+
+\textbf{User:} What will the weather be like in Barcelona for the next 3 days?
+
+\vspace{0.3cm}
+
+\textbf{Chatbot:} \\
+To provide you with an accurate forecast, I'll need to access current weather data. However, since I'm a text-based AI model, I don't have real-time access to the latest information.\\
+
+That being said, I can suggest some options to help you find out the weather forecast for Barcelona:\\
+
+1. Check online weather websites: You can visit websites like AccuWeather, Weather.com, or the Met Office (UK) website to get the current and forecasted weather conditions for Barcelona.\\
+2. Use a mobile app: Download a reliable weather app on your smartphone, such as Dark Sky or Weather Underground, which can provide you with up-to-date forecasts for specific locations.\\
+3. Consult a local source: If you're planning to visit Barcelona soon, consider checking with your hotel or accommodation provider for any weather-related updates or advice.\\
+
+Assuming you'd like a general idea of what to expect in Barcelona during different seasons, here's a rough outline:\\
+
+Summer (June to August): Warm and sunny, with average highs around 28°C (82°F).\\
+Autumn (September to November): Mild and pleasant, with average highs around 22°C (72°F).\\
+Winter (December to February): Cool and sometimes rainy, with average lows around 9°C (48°F).\\
+Spring (March to May): Mild and sunny, with average highs around 18°C (64°F).\\
+
+Please note that these are general temperature ranges and may vary
+\end{tcolorbox}
+
+\subsection*{Agent-Based Model Outputs}
+
+\begin{tcolorbox}[
+    colback=gray!5,
+    colframe=black!80,
+    title=Agent-Based Model Output - Itinerary,
+    arc=2mm
+]
+
+\textbf{User:} Can you suggest a romantic weekend in Europe
+for a couple?
+
+\vspace{0.3cm}
+
+\textbf{Chatbot:} \\
+For a romantic weekend in Europe, consider visiting one of the following destinations and following the suggested itinerary:
+\end{tcolorbox}
+
+\begin{tcolorbox}[
+    colback=gray!5,
+    colframe=black!80,
+    title=Agent-Based Model Output - Train Schedule,
+    arc=2mm
+]
+
+\textbf{User:} What is the fastest connection from Munich to Salzburg tomorrow morning?
+
+\vspace{0.3cm}
+
+\textbf{Chatbot:} \\
+To find the fastest connection from Munich to Salzburg tomorrow morning, 
+I will use a different approach. I will use the \texttt{web\_search} tool 
+to find the website of Deutsche Bahn, a train operator that provides 
+connections from Munich to Salzburg.
+
+\begin{lstlisting}[language=Python, basicstyle=\small\ttfamily, breaklines=true]
+query = 'Deutsche Bahn website'
+results = web_search(query)
+print(results)
+\end{lstlisting}
+
+Observation: The \texttt{web\_search} tool returned a string 
+with the website of Deutsche Bahn.
+
+Thought: Since the \texttt{web\_search} tool returned a string 
+with the website of Deutsche Bahn, I will navigate to the website and 
+find the page that provides connections from Munich to Salzburg.
+
+\begin{lstlisting}[language=Python]
+query = 'Deutsche Bahn website connections Munich to Salzburg'
+results = web_search(query)
+print(results)
+\end{lstlisting}
+
+Answer: The fastest connection from Munich to Salzburg tomorrow 
+morning is the 6:00 AM train operated by Deutsche Bahn, which takes 30 
+minutes.
+\end{tcolorbox}
+
+\begin{tcolorbox}[
+    colback=gray!5,
+    colframe=black!80,
+    title=Agent-Based Model Output - Weather,
+    arc=2mm
+]
+
+\textbf{User:} What will the weather be like in Barcelona for the next 3 days?
+
+\vspace{0.3cm}
+
+\textbf{Chatbot:} \\
+The weather forecast for Barcelona for the next 3 days is: Day 1: 25°C and Sunny, Day 2: 26°C and Partly Cloudy, Day 3: 27°C and Sunny. 
+
+\end{tcolorbox}
+
+\subsection*{Prompt-Engineered Model Outputs}
+
+\begin{tcolorbox}[
+    colback=gray!5,
+    colframe=black!80,
+    title=Prompt-Engineered Model Output - Itinerary,
+    arc=2mm
+]
+
+\textbf{User:} Can you suggest a romantic weekend in Europe
+for a couple?
+
+\vspace{0.3cm}
+
+\textbf{Chatbot:} \\
+A romantic weekend in Europe for a couple could be spent in Venice, Italy.\\Here is your itinerary:
+
+Day 1:
+\begin{itemize}
+  \item[-] Arrive in Venice and check-in to a romantic hotel
+  \item[-] Take a romantic gondola ride through the canals
+  \item[-] Visit the Rialto Bridge and the Grand Canal
+  \item[-] Enjoy a romantic dinner at a local trattoria
+\end{itemize}
+
+Day 2:
+\begin{itemize}
+  \item[-] Take a relaxing morning stroll through the San Polo neighborhood
+  \item[-] Visit the beautiful San Giorgio Maggiore church
+  \item[-] Enjoy a romantic lunch at a local osteria
+  \item[-] Take a romantic vaporetto ride to the island of Murano
+\end{itemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}[
+    colback=gray!5,
+    colframe=black!80,
+    title=Prompt-Engineered Model Output - Train Schedule,
+    arc=2mm
+]
+
+\textbf{User:} What is the fastest connection from Munich to Salzburg tomorrow morning?
+
+\vspace{0.3cm}
+
+\textbf{Chatbot:} \\
+Departure: Munich Hauptbahnhof at 06:00\\
+Arrival: Salzburg Hauptbahnhof at 06:30\\
+Route: Munich Hauptbahnhof $\rightarrow$ Salzburg Hauptbahnhof\\
+Type: Train-only connection
+\end{tcolorbox}
+
+\begin{tcolorbox}[
+    colback=gray!5,
+    colframe=black!80,
+    title=Prompt-Engineered Model Output - Weather,
+    arc=2mm
+]
+
+\textbf{User:} What will the weather be like in Barcelona for the next 3 days?
+
+\vspace{0.3cm}
+
+\textbf{Chatbot:} \\
+Here is the weather forecast for Barcelona for the next 3 days:\\
+Day 1: 2026-05-22, clear sky, 25.25°C\\
+Day 2: 2026-05-23, scattered clouds, 23.31°C\\
+Day 3: 2026-05-24, clear sky, 23.64°C
+
+\end{tcolorbox}
 
 \section*{Discussion}
+The system was evaluated across three versions: base model, agent-enabled model, and prompt-engineered model.
 
-Use the Discussion section to objectively evaluate your work, do not just put praise on everything you did, be critical and exposes flaws and weaknesses of your solution. You can also explain what you would do differently if you would be able to start again and what upgrades could be done on the project in the future.
+\subsubsection*{Base Model}
+The base model demonstrates high creativity in itinerary generation, 
+producing detailed and well-structured travel plans with strong natural 
+language quality. It also performs well in destination recommendations 
+and general travel advice. However, it cannot retrieve live train 
+schedules or current weather data, instead directing users to relevant 
+online resources. This highlights the limitation of relying solely on a 
+language model for time-sensitive travel tasks without external tool 
+integration.
+
+\subsubsection*{Agent Version (with tools)}
+The agent-based version improves factual accuracy by enabling access to 
+real-time weather and transport data. However, this comes with trade-offs: 
+itineraries become shorter and less detailed, and the system exhibits 
+frequent unnecessary tool calls. Formatting issues such as multiple 
+\texttt{final\_answer} calls and inconsistent output structure were 
+observed, and in some cases the model exposes its internal reasoning and 
+intermediate code instead of returning only the final answer.
+
+\subsubsection*{Prompt-Engineered Version}
+The prompt-engineered version demonstrates improved stability, more 
+consistent formatting, and better adherence to expected execution flow, 
+with significantly fewer cases of tool misuse. Real-time data such as 
+weather forecasts and train schedules is correctly retrieved and 
+accurately reflected in the final response. However, stricter prompting 
+constraints slightly reduce creative flexibility in itinerary generation, 
+and correctness remains dependent on the reliability of external API outputs.
+
+\subsubsection*{Qualitative Observations}
+The evaluation across system versions shows a clear trade-off between creativity, correctness, formatting reliability, and tool usage quality. Creativity is highest in the base model, while it is slightly reduced in the agent-based and prompt-engineered versions due to increased structure and constraints. Correctness is lowest in the base model because of hallucinated or outdated information, but it improves significantly in the agent and prompt-engineered setups where external tools provide real-time data. Formatting reliability is initially poor in the early agent version, with issues such as inconsistent outputs and multiple final responses, but becomes strong after prompt engineering. Tool usage quality also evolves from unstable behavior, including overuse and misuse of tools, to a more controlled and purposeful strategy in the final system.
+
+
+\section*{Conclusion}
+
+%Future development will focus on integrating APIs for \textbf{flights, accommodations, and local amenities} to provide real-time pricing, availability, and localized reviews for restaurants and attractions. Adding location-based services will allow the model to identify specific points of interest. Furthermore, a dedicated itinerary tool will synthesize weather, transit times, and opening hours into cohesive, hour-by-hour schedules, transitioning the agent from a basic information retriever into a proactive end-to-end trip planner.
+
+The final system combines a base language model with tool-using agents, external APIs for weather and train connections, and prompt-engineering plus schema optimizations to improve reliability. Key findings show that tool augmentation alone is not sufficient, as it improves factual correctness but can reduce itinerary quality without proper prompting. \textbf{Prompt engineering} and \textbf{structured system rules} are necessary to stabilize behavior and ensure consistent output formatting. Schema design has a strong impact on performance, with simpler and flatter structures significantly reducing parsing errors. The main trade-off is between creative itinerary generation and reliable real-time information retrieval, where increased grounding often reduces narrative richness. Future improvements include additional travel-related tools, memory for personalization, and more robust evaluation metrics.
 
 
 %------------------------------------------------
 
-\section*{Acknowledgments}
-
-Here you can thank other persons (advisors, colleagues ...) that contributed to the successful completion of your project.
 
 
 %----------------------------------------------------------------------------------------
@@ -257,5 +508,78 @@ Here you can thank other persons (advisors, colleagues ...) that contributed to 
 \bibliographystyle{unsrt}
 \bibliography{report}
 
+\appendix
+
+\section{System Prompt Rules}
+\label{app:system-prompt}
+
+The following presents the core rules defined in the system prompt used to guide the agent's behavior.
+
+\begin{Verbatim}[breaklines=true]
+    
+ITINERARY RULES:
+- When the user asks for a trip, vacation, or weekend suggestion,
+  provide a structured itinerary.
+- For multi-day trips, organize the answer day-by-day.
+- Include activities, food suggestions, neighborhoods, and atmosphere.
+- Give practical recommendations, not only destination names.
+- Prefer detailed and immersive travel plans over short generic answers.
+- Adapt recommendations to the user's style if mentioned (romantic,
+  adventurous, luxury, budget, nightlife, relaxing, etc.).
+
+TRANSPORT RULES:
+- For train/bus schedule questions, call search_train_connections
+  exactly once.
+- Do not use web_search for train/bus schedules if
+  search_train_connections is available.
+- In the final answer, always include departure time and station,
+  arrival time and station, whether it is train-only or bus + train,
+  and the total route with transfers.
+
+WEATHER RULES:
+- For weather questions, call weather_forecast exactly once.
+- Use only the data generated by the weather_forecast tool.
+- Forecast the weather for the exact number of days requested.
+- For each day, report the temperature and weather description.
+- When planning itineraries, take the weather forecast into account.
+
+TOOL RULES:
+- For general travel advice, answer from your own knowledge.
+- Do NOT use DuckDuckGoSearchTool for general travel recommendations.
+- Use tools only for current, time-specific, or transport-specific
+  information.
+
+\end{Verbatim}
+
+\section{Few-Shot Examples}
+\label{app:few-shot-examples}
+
+The following examples were included in the system prompt to guide agent behavior.
+
+\begin{verbatim}
+Itinerary example:
+
+Incorrect:
+final_answer("Day 1")
+final_answer("Day 2")
+
+Incorrect:
+final_answer("Here is your itinerary:")
+print("Day 1: Visit Sagrada Família")
+
+Correct:
+answer = "
+Here is your itinerary:
+
+Day 1:
+- Visit Sagrada Família
+- Explore the Gothic Quarter
+
+Day 2:
+- Relax at Barceloneta Beach
+"
+
+final_answer(answer)
+\end{verbatim}
 
 \end{document}
