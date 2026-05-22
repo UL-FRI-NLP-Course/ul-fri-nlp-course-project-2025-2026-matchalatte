@@ -68,6 +68,10 @@ Example:
 ```bash
 sbatch scripts/chatbot.sh "What is a romantic weekend destination in Europe?"
 ```
+To monitor the status and progress of your job, run:
+```bash
+sacct -j <job_id>
+```
 
 ### 5. Read the ouput
 After the job finishes, inspect the generated Slurm output file:
