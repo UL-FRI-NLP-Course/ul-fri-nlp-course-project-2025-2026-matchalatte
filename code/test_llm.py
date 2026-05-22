@@ -52,7 +52,6 @@ Keep answers structured and easy to follow.""",
 print(torch.cuda.is_available())
 
 prompts = [
-    "When is the earliest train from Ljubljana to Milano today?",
     "What will the weather be like in Barcelona for the next 3 days?",
     "Can you suggest a romantic weekend in Europe for a couple?",
     "What clothes should I pack for the next 3 days in Rome?",
