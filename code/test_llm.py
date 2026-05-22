@@ -1,7 +1,3 @@
-# from huggingface_hub import login
-
-# login("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")
-
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
