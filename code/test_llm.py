@@ -1,6 +1,6 @@
-from huggingface_hub import login
+# from huggingface_hub import login
 
-login("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")
+# login("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")
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
@@ -8,30 +8,27 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 model_name = "meta-llama/Llama-3.1-8B-Instruct"
 
 bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,               # Store weights in 4-bit
-    bnb_4bit_quant_type="nf4",       # NormalFloat 4-bit — optimal for normally-distributed weights
-    bnb_4bit_use_double_quant=True,  # Quantise the quantisation constants too (~0.37 bits saved/param)
-    bnb_4bit_compute_dtype=torch.bfloat16,  # Upcast to bfloat16 for matrix multiplications
+    load_in_4bit=True,               
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_compute_dtype=torch.bfloat16,
 )
 
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     quantization_config=bnb_config,
-    device_map="auto",        # Distribute layers across available GPUs automatically
+    device_map="auto",
     trust_remote_code=True,
 )
 model.config.use_cache = False
 
 tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
-# Llama-3 has no dedicated pad token — use eos_token as pad
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "left"
 
 from transformers import pipeline
 
-# Create the pipeline without generation parameters — the pipeline manages
-# its own GenerationConfig internally; passing one at construction causes a conflict.
 generator = pipeline(
     model=model,
     tokenizer=tokenizer,
@@ -58,14 +55,23 @@ Keep answers structured and easy to follow.""",
 
 print(torch.cuda.is_available())
 
-msg0 = "I’m visiting Barcelona with friends and we want beaches, nightlife, and fun activities. What should we do?"
-msg1 = "What’s the best way to travel from Amsterdam to Brussels?"
-msg2 = "Can you suggest a romantic weekend in Europe for a couple?"
-msg3 = "What are the best budget-friendly cities to visit in Europe?"
-msg4 = "When is the earliest train from Ljubljana to Milano today"
+prompts = [
+    "When is the earliest train from Ljubljana to Milano today?",
+    "What will the weather be like in Barcelona for the next 3 days?",
+    "Can you suggest a romantic weekend in Europe for a couple?",
+    "What clothes should I pack for the next 3 days in Rome?",
+    "I’m visiting Barcelona with friends for 3 days and we want beaches, nightlife, and fun activities. What should we do?"
+]
 
-response = chat(
-    user_message=msg4
-)
-print()
-print(response)
+results = []
+for prompt in prompts:
+    response = chat(
+        user_message="Find me a complete train route from Ljubljana to Munich tomorrow."
+    )
+    results.append((prompt, response))
+
+print("======= RESULTS =======\n")
+for prompt, result in results:
+    print(prompt)
+    print(result, '\n')
+print("=======================")
